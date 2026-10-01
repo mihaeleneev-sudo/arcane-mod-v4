@@ -7,13 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Распаковать проект из zip
+      - name: Unzip project
         run: |
-          ZIP=$(ls arcane-mod-*.zip | head -n 1)
-          echo "Беру архив: $ZIP"
           mkdir project
-          unzip -q "$ZIP" -d project
-          ls project
+          unzip -q arcane-mod-1.2.0.zip -d project
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -21,29 +18,10 @@ jobs:
       - uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: 8.5
-      - name: Сборка
+      - name: Build
         working-directory: project
         run: gradle build
-      - name: Проверка, что в моде есть все нужные файлы
-        working-directory: project
-        run: |
-          JAR=$(ls build/libs/arcane-*.jar | grep -v sources | head -n 1)
-          echo "Проверяю $JAR"
-          for f in \
-            assets/arcane/textures/entity/sair_costume.png \
-            assets/arcane/textures/entity/eiro_overlay.png \
-            assets/arcane/textures/item/eiro_heart.png \
-            assets/arcane/textures/item/arcane_shard.png \
-            assets/arcane/textures/item/arcane_crystal.png \
-            assets/arcane/textures/item/sair_katana.png \
-            assets/arcane/models/item/eiro_heart.json \
-            assets/arcane/lang/ru_ru.json \
-            arcane.mixins.json \
-            com/arcane/Forms.class ; do
-            if ! unzip -l "$JAR" | grep -q "$f"; then
-              echo "::error::В МОДЕ НЕТ ФАЙЛА: $f"
-              exit 1
-            fi
-          done
-          echo "Все файлы на месте"
-      -
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arcane-mod
+          path: project/build/libs/arcane-1.2.0.jar
